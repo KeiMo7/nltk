@@ -62,6 +62,7 @@ For further information, please see Chapter 3 of the NLTK book.
 import functools
 import re
 
+from nltk import provenance
 from nltk.data import load
 from nltk.tokenize.casual import TweetTokenizer, casual_tokenize
 from nltk.tokenize.destructive import NLTKWordTokenizer
@@ -141,6 +142,8 @@ def sent_tokenize(text, language="english"):
         installed.
     """
     tokenizer = _get_punkt_tokenizer(language)
+    if provenance._ACTIVE:
+        provenance._note_punkt(language)
     return tokenizer.tokenize(text)
 
 

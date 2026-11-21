@@ -210,7 +210,7 @@ if importlib.util.find_spec("tkinter"):
 # from a subpackage)
 
 from nltk import ccg, chunk, classify, collocations
-from nltk import data, featstruct, grammar, help, inference, metrics
+from nltk import data, featstruct, grammar, help, inference, metrics, provenance
 from nltk import misc, parse, probability, sem, stem, wsd
 from nltk import tag, tbl, text, tokenize, translate, tree, util
 

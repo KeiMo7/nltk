@@ -90,6 +90,7 @@ Next Steps
 
    install
    data
+   provenance
 
 .. toctree::
    :maxdepth: 1

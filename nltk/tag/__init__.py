@@ -67,6 +67,7 @@ isort:skip_file
 
 import functools
 
+from nltk import provenance
 from nltk.tag.api import TaggerI
 from nltk.tag.util import str2tuple, tuple2str, untag
 from nltk.tag.sequential import (
@@ -166,6 +167,8 @@ def pos_tag(tokens, tagset=None, lang="eng"):
     :rtype: list(tuple(str, str))
     """
     tagger = _get_tagger(lang)
+    if provenance._ACTIVE:
+        provenance._note_perceptron(lang, tagset)
     return _pos_tag(tokens, tagset, tagger, lang)
 
 
@@ -184,4 +187,6 @@ def pos_tag_sents(sentences, tagset=None, lang="eng"):
     :rtype: list(list(tuple(str, str)))
     """
     tagger = _get_tagger(lang)
+    if provenance._ACTIVE:
+        provenance._note_perceptron(lang, tagset)
     return [_pos_tag(sent, tagset, tagger, lang) for sent in sentences]

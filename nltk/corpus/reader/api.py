@@ -14,7 +14,7 @@ import os
 from collections import defaultdict
 from itertools import chain
 
-from nltk import pathsec, redos
+from nltk import pathsec, provenance, redos
 from nltk.corpus.reader.util import *
 from nltk.data import FileSystemPathPointer, PathPointer, ZipFilePathPointer
 from nltk.pathsec import validate_path
@@ -127,6 +127,12 @@ class CorpusReader:
            this corpus.  If ``encoding`` is None, then the file
            contents are processed using byte strings."""
         self._tagset = tagset
+
+        # Provenance is opt-in: with no recording session active this is a
+        # single attribute lookup and a false branch, and no result changes.
+        # The session fingerprints the reader only when its result is built.
+        if provenance._ACTIVE:
+            provenance._note_corpus_reader(self)
 
     def __repr__(self):
         if isinstance(self._root, ZipFilePathPointer):
