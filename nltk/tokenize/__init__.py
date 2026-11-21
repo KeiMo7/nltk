@@ -128,7 +128,7 @@ def punkt_model_available(language="english"):
 
 
 # Standard sentence tokenizer.
-def sent_tokenize(text, language="english"):
+def sent_tokenize(text, language="english", *, cache=None):
     """
     Return a sentence-tokenized copy of *text*,
     using NLTK's recommended sentence tokenizer
@@ -139,7 +139,22 @@ def sent_tokenize(text, language="english"):
     :param language: the model name in the Punkt corpus.
         :func:`punkt_model_available` reports whether that model is
         installed.
+    :param cache: optional persistent result cache. ``None`` (the default)
+        keeps the historical in-memory-only behaviour; pass a
+        :class:`~nltk.cache.PipelineCache`, a cache directory path, or
+        ``True`` for the default ``~/.nltk_cache`` location. A hit skips
+        tokenization entirely. See :mod:`nltk.cache` for the key format and
+        invalidation rules.
+    :type cache: None or bool or str or ~nltk.cache.PipelineCache
     """
+    if cache is not None:
+        from nltk.cache.pipeline import cached_sent_tokenize
+
+        return cached_sent_tokenize(_sent_tokenize, text, language, cache)
+    return _sent_tokenize(text, language)
+
+
+def _sent_tokenize(text, language):
     tokenizer = _get_punkt_tokenizer(language)
     return tokenizer.tokenize(text)
 
@@ -148,7 +163,7 @@ def sent_tokenize(text, language="english"):
 _treebank_word_tokenizer = NLTKWordTokenizer()
 
 
-def word_tokenize(text, language="english", preserve_line=False):
+def word_tokenize(text, language="english", preserve_line=False, *, cache=None):
     """
     Return a tokenized copy of *text*,
     using NLTK's recommended word tokenizer
@@ -162,7 +177,24 @@ def word_tokenize(text, language="english", preserve_line=False):
     :type language: str
     :param preserve_line: A flag to decide whether to sentence tokenize the text or not.
     :type preserve_line: bool
+    :param cache: optional persistent result cache. ``None`` (the default)
+        keeps the historical in-memory-only behaviour; pass a
+        :class:`~nltk.cache.PipelineCache`, a cache directory path, or
+        ``True`` for the default ``~/.nltk_cache`` location. The cache key
+        includes the text digest, the processor version (NLTK version,
+        language, ``preserve_line``) and the Punkt model version.
+    :type cache: None or bool or str or ~nltk.cache.PipelineCache
     """
+    if cache is not None:
+        from nltk.cache.pipeline import cached_word_tokenize
+
+        return cached_word_tokenize(
+            _word_tokenize, text, language, preserve_line, cache
+        )
+    return _word_tokenize(text, language, preserve_line)
+
+
+def _word_tokenize(text, language, preserve_line):
     sentences = [text] if preserve_line else sent_tokenize(text, language)
     return [
         token for sent in sentences for token in _treebank_word_tokenizer.tokenize(sent)

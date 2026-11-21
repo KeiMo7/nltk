@@ -140,7 +140,7 @@ def _pos_tag(tokens, tagset=None, tagger=None, lang=None):
         return tagged_tokens
 
 
-def pos_tag(tokens, tagset=None, lang="eng"):
+def pos_tag(tokens, tagset=None, lang="eng", *, cache=None):
     """
     Use NLTK's currently recommended part of speech tagger to
     tag the given list of tokens.
@@ -162,14 +162,29 @@ def pos_tag(tokens, tagset=None, lang="eng"):
     :type tagset: str
     :param lang: the ISO 639 code of the language, e.g. 'eng' for English, 'rus' for Russian
     :type lang: str
+    :param cache: optional persistent result cache. ``None`` (the default)
+        keeps the historical in-memory-only behaviour; pass a
+        :class:`~nltk.cache.PipelineCache`, a cache directory path, or
+        ``True`` for the default ``~/.nltk_cache`` location. The cache key
+        includes the token-list digest, the processor version (NLTK version,
+        language, tagset) and the tagger-model version.
+    :type cache: None or bool or str or ~nltk.cache.PipelineCache
     :return: The tagged tokens
     :rtype: list(tuple(str, str))
     """
+    if cache is not None:
+        from nltk.cache.pipeline import cached_pos_tag
+
+        return cached_pos_tag(_pos_tag_public, tokens, tagset, lang, cache)
+    return _pos_tag_public(tokens, tagset, lang)
+
+
+def _pos_tag_public(tokens, tagset, lang):
     tagger = _get_tagger(lang)
     return _pos_tag(tokens, tagset, tagger, lang)
 
 
-def pos_tag_sents(sentences, tagset=None, lang="eng"):
+def pos_tag_sents(sentences, tagset=None, lang="eng", *, cache=None):
     """
     Use NLTK's currently recommended part of speech tagger to tag the
     given list of sentences, each consisting of a list of tokens.
@@ -180,8 +195,25 @@ def pos_tag_sents(sentences, tagset=None, lang="eng"):
     :type tagset: str
     :param lang: the ISO 639 code of the language, e.g. 'eng' for English, 'rus' for Russian
     :type lang: str
+    :param cache: optional persistent result cache; each sentence is cached
+        independently under its own key. See :func:`pos_tag`.
+    :type cache: None or bool or str or ~nltk.cache.PipelineCache
     :return: The list of tagged sentences
     :rtype: list(list(tuple(str, str)))
     """
+    if cache is not None:
+        from nltk.cache.pipeline import cached_pos_tag
+
+        tagger = _get_tagger(lang)
+
+        def _tag_one(sent, _tagset, _lang, _tagger=tagger):
+            # cached_pos_tag invokes impl(tokens, tagset, lang); bind the
+            # already-loaded tagger so each sentence reuses the one model.
+            return _pos_tag(sent, _tagset, _tagger, _lang)
+
+        return [
+            cached_pos_tag(_tag_one, sent, tagset, lang, cache)
+            for sent in sentences
+        ]
     tagger = _get_tagger(lang)
     return [_pos_tag(sent, tagset, tagger, lang) for sent in sentences]
